@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.IO;
-
 namespace Lab04;
 
 public class Program
@@ -27,6 +26,70 @@ public class Program
                 return;
             }
             Persona p1 = temporal.Value;
+            string path = @"C:\Users\AndresLima\Desktop\crypted";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string convoPath = @"C:\Users\AndresLima\Desktop\crypted\" + p1.dpi;
+            if (!Directory.Exists(convoPath))
+            {
+                Directory.CreateDirectory(convoPath);
+            }
+            int i = 1;
+
+            foreach (var item in p1.convos)
+            {
+                try
+                {
+                    string content = File.ReadAllText(item);
+                    List<int> compressed = LZW.encode(content);
+                    char delimeter = ',';
+                    string text = string.Join(delimeter, compressed);
+                    string crypted = DES.encriptar(text, "arbustos");
+                    string fileName = "crypted-CONVO-" + p1.dpi + "-" + i.ToString() + ".txt";
+                    fileName = convoPath + "\\" + fileName;
+                    File.WriteAllText(fileName, crypted);                    
+                }
+                catch (Exception e)
+                {
+
+                    throw new Exception("Sucedio un error inesperado");
+                }
+                i++;
+            }
+
+            Console.WriteLine("Se encontraron " + i.ToString() + " coversaciones para la persona con el dpi: " + p1.dpi);
+            Console.WriteLine("Ingrese el número de la conversación que quiere descifrar");
+            int convoOpt = Convert.ToInt32(Console.ReadLine());
+            if (convoOpt <= 0 && convoOpt > i)
+            {
+                Console.WriteLine("No existe la conversación");
+                return;
+            }            
+            Console.WriteLine("Ingrese la llave para descifrar la conversación");
+            string llave = Console.ReadLine()!;
+            if (llave.Length != 8)
+            {
+                Console.WriteLine("Llave de longitud incorrecta");
+                return;
+            }
+            string file = "crypted-CONVO-" + p1.dpi + "-" + convoOpt + ".txt";
+            string[] convo = Directory.GetFiles(@"C:\Users\AndresLima\Desktop\crypted\" + p1.dpi, file);
+            string contenido = File.ReadAllText(convo[0]);
+            string descifrado = DES.desencriptar(contenido, llave);
+            string[] info = descifrado.Split(",");
+            List<int> lista = new List<int>();
+            foreach (var item in info)
+            {
+                lista.Add(Convert.ToInt32(item));
+            }
+            string decompressed = LZW.Decompress(lista);
+            Console.Clear();
+            Console.WriteLine(" ");
+            Console.WriteLine(" ");
+            Console.WriteLine(decompressed);
+            Console.ReadKey();
         }
         catch (Exception e)
         {
